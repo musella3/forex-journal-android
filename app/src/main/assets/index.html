@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0a0a0f">
+    <title>Forex Journal</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+          --bg: #0a0a0f;
+          --surface: #13131a;
+          --surface2: #1c1c26;
+          --border: rgba(255,255,255,0.07);
+          --border2: rgba(255,255,255,0.12);
+          --text: #f0f0f5;
+          --muted: #6b6b80;
+          --subtle: #3a3a4a;
+          --green: #00d4a0;
+          --green-dim: rgba(0,212,160,0.12);
+          --red: #ff5c5c;
+          --red-dim: rgba(255,92,92,0.12);
+          --gold: #f5c842;
+          --gold-dim: rgba(245,200,66,0.12);
+          --blue: #5b8af5;
+          --blue-dim: rgba(91,138,245,0.12);
+          --radius: 14px;
+          --radius-sm: 8px;
+          --font-display: 'Syne', sans-serif;
+          --font-mono: 'DM Mono', monospace;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font-display); overflow: hidden; }
+        body { display: flex; flex-direction: column; }
+
+        /* scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--subtle); border-radius: 2px; }
+
+        /* NAV */
+        .nav { display: flex; gap: 2px; padding: 10px 12px 0; background: var(--bg); border-bottom: 1px solid var(--border); flex-shrink: 0; overflow-x: auto; }
+        .nav::-webkit-scrollbar { display: none; }
+        .nav-btn { flex-shrink: 0; padding: 8px 14px; font-family: var(--font-display); font-size: 12px; font-weight: 500; border: none; background: none; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.2s; white-space: nowrap; letter-spacing: 0.02em; }
+        .nav-btn.active { color: var(--text); border-bottom-color: var(--green); }
+        .nav-btn:hover:not(.active) { color: var(--text); }
+
+        /* PAGES */
+        .pages { flex: 1; overflow: hidden; position: relative; }
+        .page { display: none; height: 100%; overflow-y: auto; padding: 16px; }
+        .page.active { display: block; }
+
+        /* CARDS */
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
+        .card-title { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; color: var(--muted); text-transform: uppercase; margin-bottom: 14px; }
+
+        /* METRICS ROW */
+        .metrics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
+        .metric { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; }
+        .metric-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; letter-spacing: 0.04em; }
+        .metric-value { font-family: var(--font-mono); font-size: 22px; font-weight: 500; color: var(--text); }
+        .metric-value.pos { color: var(--green); }
+        .metric-value.neg { color: var(--red); }
+        .metric-value.gold { color: var(--gold); }
+
+        /* FORM ELEMENTS */
+        .field { margin-bottom: 12px; }
+        .field label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 6px; letter-spacing: 0.04em; text-transform: uppercase; }
+        .field input, .field select, .field textarea {
+          width: 100%; background: var(--surface2); border: 1px solid var(--border2);
+          border-radius: var(--radius-sm); color: var(--text); font-family: var(--font-display);
+          font-size: 14px; padding: 10px 12px; outline: none; transition: border-color 0.2s;
+          -webkit-appearance: none;
+        }
+        .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--green); }
+        .field textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
+        .field select option { background: var(--surface2); }
+        .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+        /* BUTTONS */
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 12px 20px; border-radius: var(--radius-sm); font-family: var(--font-display); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; border: none; letter-spacing: 0.02em; }
+        .btn-primary { background: var(--green); color: #000; width: 100%; }
+        .btn-primary:hover { opacity: 0.88; }
+        .btn-primary:active { transform: scale(0.98); }
+        .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border2); }
+        .btn-ghost:hover { border-color: var(--border2); background: var(--subtle); }
+        .btn-row { display: flex; gap: 10px; margin-top: 4px; }
+        .btn-row .btn-ghost { flex: 1; }
+
+        /* CHECKLIST */
+        .check-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+        .check-item:last-child { border-bottom: none; }
+        .check-box { width: 20px; height: 20px; min-width: 20px; border: 1.5px solid var(--border2); border-radius: 5px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; margin-top: 1px; }
+        .check-box.checked { background: var(--green); border-color: var(--green); }
+        .check-box.checked::after { content: ''; width: 5px; height: 9px; border: 2px solid #000; border-top: none; border-left: none; transform: rotate(45deg) translateY(-1px); display: block; }
+        .check-label { font-size: 14px; line-height: 1.4; color: var(--text); }
+        .check-label.done { color: var(--muted); text-decoration: line-through; }
+
+        /* EMOTION GRID */
+        .emo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .emo-btn { padding: 10px 4px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface2); color: var(--muted); font-family: var(--font-display); font-size: 12px; cursor: pointer; text-align: center; transition: all 0.15s; }
+        .emo-btn.sel { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+
+        /* BADGE */
+        .badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; font-family: var(--font-mono); }
+        .badge-green { background: var(--green-dim); color: var(--green); }
+        .badge-red { background: var(--red-dim); color: var(--red); }
+        .badge-blue { background: var(--blue-dim); color: var(--blue); }
+        .badge-gold { background: var(--gold-dim); color: var(--gold); }
+        .badge-muted { background: var(--surface2); color: var(--muted); }
+
+        /* PROGRESS */
+        .prog-wrap { margin-bottom: 14px; }
+        .prog-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .prog-label { font-size: 13px; color: var(--text); }
+        .prog-val { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+        .prog-bar { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+        .prog-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+        .prog-fill.green { background: var(--green); }
+        .prog-fill.blue { background: var(--blue); }
+        .prog-fill.gold { background: var(--gold); }
+        .prog-fill.red { background: var(--red); }
+
+        /* TRADE TABLE */
+        .trade-scroll { overflow-x: auto; }
+        .trade-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 480px; }
+        .trade-table th { font-size: 10px; font-weight: 500; color: var(--muted); text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
+        .trade-table td { padding: 10px 10px; border-bottom: 1px solid var(--border); color: var(--text); font-size: 12px; font-family: var(--font-mono); white-space: nowrap; }
+        .trade-table tr:last-child td { border-bottom: none; }
+        .trade-table tr:hover td { background: var(--surface2); }
+
+        /* RULE ITEM */
+        .rule-row { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+        .rule-row:last-child { border-bottom: none; }
+        .rule-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+
+        /* SESSION TIMES */
+        .session-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        .session-card { background: var(--surface2); border-radius: var(--radius-sm); border: 1px solid var(--border); padding: 12px; }
+        .session-name { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+        .session-time { font-family: var(--font-mono); font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+        .session-pairs { font-size: 11px; color: var(--muted); }
+        .session-card.active-now { border-color: var(--green); }
+        .session-card.active-now .session-name { color: var(--green); }
+
+        /* WEEK DAYS */
+        .days-row { display: flex; gap: 6px; margin-bottom: 14px; }
+        .day-pill { flex: 1; text-align: center; padding: 10px 4px; border-radius: var(--radius-sm); background: var(--surface2); border: 1px solid var(--border); font-size: 11px; color: var(--muted); cursor: pointer; transition: all 0.15s; font-weight: 500; }
+        .day-pill.today { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+        .day-pill.logged { border-color: var(--subtle); color: var(--text); }
+
+        /* WEEKLY GOAL TRACKER */
+        .goal-section { margin-bottom: 20px; }
+        .goal-section-title { font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+        .day-checks { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 8px; }
+        .day-check { aspect-ratio: 1; border-radius: 4px; background: var(--surface2); border: 1px solid var(--border); cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--muted); }
+        .day-check.filled { background: var(--green-dim); border-color: var(--green); }
+        .day-check.filled.blue { background: var(--blue-dim); border-color: var(--blue); }
+        .day-check.filled.gold { background: var(--gold-dim); border-color: var(--gold); }
+        .goal-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .goal-icon { width: 32px; height: 32px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+        .goal-info { flex: 1; }
+        .goal-name { font-size: 13px; color: var(--text); margin-bottom: 3px; }
+        .goal-meta { font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
+        .input-num { width: 70px; background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text); font-family: var(--font-mono); font-size: 14px; padding: 6px 8px; text-align: center; outline: none; }
+        .input-num:focus { border-color: var(--green); }
+
+        /* TOAST */
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(60px); background: var(--green); color: #000; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 500; z-index: 999; transition: transform 0.3s ease; pointer-events: none; white-space: nowrap; }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+
+        /* HEADER BAR */
+        .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+        .page-header-title { font-size: 20px; font-weight: 700; }
+        .page-header-sub { font-size: 12px; color: var(--muted); margin-top: 2px; font-family: var(--font-mono); }
+
+        /* DIVIDER */
+        .divider { height: 1px; background: var(--border); margin: 14px 0; }
+
+        /* EMPTY */
+        .empty { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px; line-height: 1.6; }
+        .empty-icon { font-size: 32px; margin-bottom: 12px; }
+
+        /* STREAK */
+        .streak-row { display: flex; gap: 5px; margin-bottom: 4px; }
+        .streak-dot { width: 10px; height: 10px; border-radius: 2px; background: var(--surface2); }
+        .streak-dot.on { background: var(--green); }
+        .streak-dot.partial { background: var(--gold); }
+    </style>
+</head>
+<body>
+
+<nav class="nav">
+    <button class="nav-btn active" onclick="go('dashboard')">Dashboard</button>
+    <button class="nav-btn" onclick="go('daily')">Daily Log</button>
+    <button class="nav-btn" onclick="go('trade')">New Trade</button>
+    <button class="nav-btn" onclick="go('history')">History</button>
+    <button class="nav-btn" onclick="go('weekly')">Weekly Goals</button>
+    <button class="nav-btn" onclick="go('rules')">My Rules</button>
+    <button class="nav-btn" onclick="go('schedule')">Schedule</button>
+</nav>
+
+<div class="pages">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+        <div class="page-header">
+            <div>
+                <div class="page-header-title">Forex Journal</div>
+                <div class="page-header-sub" id="dash-date"></div>
+            </div>
+            <div id="session-badge" class="badge badge-green" style="margin-top:4px;"></div>
+        </div>
+
+        <div class="metrics">
+            <div class="metric"><div class="metric-label">Total P&L</div><div class="metric-value pos" id="d-totalpnl">$0</div></div>
+            <div class="metric"><div class="metric-label">Win rate</div><div class="metric-value gold" id="d-wr">—</div></div>
+            <div class="metric"><div class="metric-label">Total trades</div><div class="metric-value" id="d-total">0</div></div>
+            <div class="metric"><div class="metric-label">This week</div><div class="metric-value" id="d-week">$0</div></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">This week at a glance</div>
+            <div class="prog-wrap">
+                <div class="prog-header"><span class="prog-label">Journal entries</span><span class="prog-val" id="g-journal-d">0/5</span></div>
+                <div class="prog-bar"><div class="prog-fill green" id="g-journal-b" style="width:0%"></div></div>
+            </div>
+            <div class="prog-wrap">
+                <div class="prog-header"><span class="prog-label">Class sessions</span><span class="prog-val" id="g-class-d">0/2</span></div>
+                <div class="prog-bar"><div class="prog-fill blue" id="g-class-b" style="width:0%"></div></div>
+            </div>
+            <div class="prog-wrap">
+                <div class="prog-header"><span class="prog-label">Chart study hours</span><span class="prog-val" id="g-study-d">0/5h</span></div>
+                <div class="prog-bar"><div class="prog-fill gold" id="g-study-b" style="width:0%"></div></div>
+            </div>
+            <div class="prog-wrap" style="margin-bottom:0;">
+                <div class="prog-header"><span class="prog-label">Winning trades</span><span class="prog-val" id="g-wins-d">0/3</span></div>
+                <div class="prog-bar"><div class="prog-fill green" id="g-wins-b" style="width:0%"></div></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Recent trades</div>
+            <div id="dash-recent"><div class="empty" style="padding:20px 0;"><div>No trades yet</div></div></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Journal streak</div>
+            <div class="streak-row" id="streak-dots"></div>
+            <div style="font-size:12px; color:var(--muted); margin-top:6px;" id="streak-label">Start logging daily to build your streak</div>
+        </div>
+    </div>
+
+    <!-- DAILY LOG -->
+    <div class="page" id="page-daily">
+        <div class="page-header">
+            <div>
+                <div class="page-header-title">Daily Log</div>
+                <div class="page-header-sub" id="daily-date"></div>
+            </div>
+            <div id="daily-rating-badge" class="badge badge-muted">—</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Pre-session checklist</div>
+            <div id="checklist-wrap"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Market bias</div>
+            <div class="row2">
+                <div class="field">
+                    <label>Sentiment</label>
+                    <select id="dl-sentiment">
+                        <option value="">Select...</option>
+                        <option>Risk-on (bullish)</option>
+                        <option>Risk-off (bearish)</option>
+                        <option>Neutral / range</option>
+                        <option>Choppy — no bias</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Key news</label>
+                    <input id="dl-news" type="text" placeholder="e.g. US CPI, FOMC...">
+                </div>
+            </div>
+            <div class="field" style="margin-bottom:0;">
+                <label>Market notes</label>
+                <textarea id="dl-notes" placeholder="Price action, key levels, observations..."></textarea>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">How do you feel today?</div>
+            <div class="emo-grid" id="emo-grid"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">End of day review</div>
+            <div class="row2">
+                <div class="field">
+                    <label>Followed plan?</label>
+                    <select id="dl-plan">
+                        <option value="">Select...</option>
+                        <option>Yes — all rules</option>
+                        <option>Mostly — minor deviations</option>
+                        <option>No — broke rules</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Day rating</label>
+                    <select id="dl-rating">
+                        <option value="">Select...</option>
+                        <option value="5">5 — Excellent</option>
+                        <option value="4">4 — Good</option>
+                        <option value="3">3 — Average</option>
+                        <option value="2">2 — Poor</option>
+                        <option value="1">1 — Bad</option>
+                    </select>
+                </div>
+            </div>
+            <div class="field">
+                <label>What went well?</label>
+                <textarea id="dl-good" placeholder="Wins, good decisions, discipline..."></textarea>
+            </div>
+            <div class="field" style="margin-bottom:0;">
+                <label>What to improve tomorrow?</label>
+                <textarea id="dl-improve" placeholder="Mistakes, lessons, adjustments..."></textarea>
+            </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="saveDaily()">Save today's log</button>
+        <div style="height:20px;"></div>
+    </div>
+
+    <!-- NEW TRADE -->
+    <div class="page" id="page-trade">
+        <div class="page-header">
+            <div>
+                <div class="page-header-title">Log a Trade</div>
+                <div class="page-header-sub" id="trade-date"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Trade setup</div>
+            <div class="row3">
+                <div class="field">
+                    <label>Pair</label>
+                    <select id="t-pair">
+                        <option>EUR/USD</option><option>GBP/USD</option><option>USD/JPY</option>
+                        <option>USD/CHF</option><option>AUD/USD</option><option>NZD/USD</option>
+                        <option>USD/CAD</option><option>GBP/JPY</option><option>EUR/GBP</option>
+                        <option>XAU/USD</option><option>EUR/JPY</option><option>Other</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Direction</label>
+                    <select id="t-dir">
+                        <option>Buy</option>
+                        <option>Sell</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Type</label>
+                    <select id="t-type">
+                        <option>Scalp</option>
+                        <option>Day trade</option>
+                        <option>Swing</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row3">
+                <div class="field">
+                    <label>Entry</label>
+                    <input type="number" id="t-entry" placeholder="1.08500" step="0.00001" oninput="calcRR()">
+                </div>
+                <div class="field">
+                    <label>Stop loss</label>
+                    <input type="number" id="t-sl" placeholder="1.08200" step="0.00001" oninput="calcRR()">
+                </div>
+                <div class="field">
+                    <label>Take profit</label>
+                    <input type="number" id="t-tp" placeholder="1.09100" step="0.00001" oninput="calcRR()">
+                </div>
+            </div>
+            <div class="row3">
+                <div class="field">
+                    <label>Lot size</label>
+                    <input type="number" id="t-lot" placeholder="0.10" step="0.01">
+                </div>
+                <div class="field">
+                    <label>Risk ($)</label>
+                    <input type="number" id="t-risk" placeholder="50">
+                </div>
+                <div class="field">
+                    <label>R:R ratio</label>
+                    <input type="text" id="t-rr" placeholder="1:2" readonly style="color:var(--gold);">
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Analysis</div>
+            <div class="row2">
+                <div class="field">
+                    <label>Timeframe</label>
+                    <select id="t-tf">
+                        <option>M5</option><option>M15</option><option>M30</option>
+                        <option>H1</option><option>H4</option><option>D1</option><option>W1</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Strategy</label>
+                    <select id="t-strat">
+                        <option>Break & retest</option>
+                        <option>Supply & demand</option>
+                        <option>S/R bounce</option>
+                        <option>Trendline break</option>
+                        <option>MA crossover</option>
+                        <option>ICT / SMC</option>
+                        <option>Price action</option>
+                        <option>Fibonacci</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row2">
+                <div class="field">
+                    <label>HTF trend</label>
+                    <select id="t-trend">
+                        <option>Bullish</option><option>Bearish</option><option>Ranging</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Session</label>
+                    <select id="t-session">
+                        <option>London</option><option>New York</option><option>Tokyo</option>
+                        <option>London/NY overlap</option><option>Asian</option>
+                    </select>
+                </div>
+            </div>
+            <div class="field">
+                <label>Confluence factors</label>
+                <input type="text" id="t-conf" placeholder="e.g. S/R + trend + RSI oversold">
+            </div>
+            <div class="field" style="margin-bottom:0;">
+                <label>Trade rationale</label>
+                <textarea id="t-reason" placeholder="Why are you taking this trade? What is your edge?"></textarea>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Outcome (fill after closing)</div>
+            <div class="row3">
+                <div class="field">
+                    <label>Exit price</label>
+                    <input type="number" id="t-exit" placeholder="1.09100" step="0.00001">
+                </div>
+                <div class="field">
+                    <label>Result</label>
+                    <select id="t-outcome">
+                        <option>Pending</option>
+                        <option>Win</option>
+                        <option>Loss</option>
+                        <option>Breakeven</option>
+                        <option>Partial</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>P&L ($)</label>
+                    <input type="number" id="t-pnl" placeholder="+120">
+                </div>
+            </div>
+            <div class="field" style="margin-bottom:0;">
+                <label>Post-trade notes</label>
+                <textarea id="t-postnotes" placeholder="Did you follow your plan? Any mistakes? Early exit?"></textarea>
+            </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="saveTrade()">Save trade</button>
+        <div style="height:20px;"></div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="page" id="page-history">
+        <div class="page-header">
+            <div>
+                <div class="page-header-title">Trade History</div>
+                <div class="page-header-sub">All logged trades</div>
+            </div>
+            <button class="badge badge-red" style="cursor:pointer;border:none;font-family:var(--font-mono);" onclick="if(confirm('Clear all trades?')){clearTrades()}">Clear</button>
+        </div>
+
+        <div class="metrics">
+            <div class="metric"><div class="metric-label">Total P&L</div><div class="metric-value" id="h-pnl">$0</div></div>
+            <div class="metric"><div class="metric-label">Win rate</div><div class="metric-value gold" id="h-wr">—</div></div>
+            <div class="metric"><div class="metric-label">Best trade</div><div class="metric-value pos" id="h-best">—</div></div>
+            <div class="metric"><div class="metric-label">Worst trade</div><div class="metric-value neg" id="h-worst">—</div></div>
+        </div>
+
+        <div class="card" style="padding:0; overflow:hidden;">
+            <div class="trade-scroll">
+                <div id="history-wrap"></div>
+            </div>
+        </div>
+        <div style="height:20px;"></div>
+    </div>
+
+    <!-- WEEKLY GOALS -->
+    <div class="page" id="page-weekly">
+        <div class="page-header">
+            <div>
+                <div class="page-header-title">Weekly Goals</div>
+                <div class="page-header-sub" id="week-label"></div>
+            </div>
+            <div id="week-score" class="badge badge-gold">0%</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Overall progress</div>
+            <div class="prog-wrap" id="wp-overall">
+                <div class="prog-bar"><div class="prog-fill green" id="wp-bar" style="width:0%"></div></div>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <span class="badge badge-green" id="wp-complete">0 done</span>
+                <span class="badge badge-muted" id="wp-remain">0 remaining</span>
+            </div>
+        </div>
+
+        <!-- TRADING GOALS -->
+        <div class="card">
+            <div class="goal-section">
+                <div class="goal-section-title">Trading performance</div>
+
+                <div class="goal-row">
+                    <div class="goal-icon badge-green" style="background:var(--green-dim);">T</div>
+                    <div class="goal-info">
+                        <div class="goal-name">Trades this week</div>
+                        <div class="goal-meta">Target: <span id="g-trades-tgt">5</span> &nbsp;|&nbsp; Done: <input class="input-num" id="g-trades-val" type="number" min="0" max="20" value="0" oninput="saveGoals()"></div>
+                    </div>
+                    <input class="input-num" id="g-trades-tgt-input" type="number" min="1" max="30" value="5" oninput="document.getElementById('g-trades-tgt').textContent=this.value; saveGoals()" style="width:50px;">
+                </div>
+                <div class="prog-bar" style="margin-bottom:14px;"><div class="prog-fill green" id="pb-trades" style="width:0%"></div></div>
+
+                <div class="goal-row">
+                    <div class="goal-icon" style="background:var(--green-dim); color:var(--green); font-size:12px; font-weight:500;">W%</div>
+                    <div class="goal-info">
+                        <div class="goal-name">Win rate target</div>
+                        <div class="goal-meta">Target: <span id="g-wr-tgt">60</span>% &nbsp;|&nbsp; Actual this week: <span id="g-wr-actual" style="color:var(--green);">—</span></div>
+                    </div>
+                    <input class="input-num" id="g-wr-tgt-input" type="number" min="1" max="100" value="60" oninput="document.getElementById('g-wr-tgt').textContent=this.value; saveGoals()" style="width:50px;">
+                </div>
+                <div class="prog-bar" style="margin-bottom:14px;"><div class="prog-fill green" id="pb-wr" style="width:0%"></div></div>
+
+                <div class="goal-row">
+                    <div class="goal-icon" style="background:var(--gold-dim); color:var(--gold); font-size:12px; font-weight:500;">R:R</div>
+                    <div class="goal-info">
+                        <div class="goal-name">Min R:R ratio maintained</div>
+                        <div class="goal-meta">Days kept 1:2 minimum: <input class="input-num" id="g-rr-val" type="number" min="0" max="7" value="0" oninput="saveGoals()"> / 5</div>
+                    </div>
+                </div>
+                <div class="prog-bar" style="margin-bottom:14px;"><div class="prog-fill gold" id="pb-rr" style="width:0%"></div></div>
+
+                <div class="goal-row" style="margin-bottom:8px;">
+                    <div class="goal-icon" style="background:var(--red-dim); color:var(--red); font-size:12px; font-weight:500;">$</div>
+                    <div class="goal-info">
+                        <div class="goal-name">P&L target this week</div>
+                        <div class="goal-meta">Target: $<span id="g-pnl-tgt">200</span> &nbsp;|&nbsp; Actual: <span id="g-pnl-actual" style="color:var(--green);">$0</span></div>
+                    </div>
+                    <input class="input-num" id="g-pnl-tgt-input" type="number" min="1" value="200" oninput="document.getElementById('g-pnl-tgt').textContent=this.value; saveGoals()" style="width:60px;">
+                </div>
+                <div class="prog-bar" style="margin-bottom:0;"><div class="prog-fill green" id="pb-pnl" style="width:0%"></div></div>
+            </div>
+        </div>
+
+        <!-- STUDY GOALS -->
+        <div class="card">
+            <div class="goal-section">
+                <div class="goal-section-title">Study & discipline</div>
+
+                <div class="goal-row">
+                    <div class="goal-icon" style="background:var(--blue-dim); color:var(--blue); font-size:12px; font-weight:500;">J</div>
+                    <div class="goal-info">
+                        <div class="goal-name">Journal entries (Mon–Fri)</div>
+                        <div class="goal-meta">Tap each day you logged</div>
+                    </div>
+                </div>
+                <div class="day-checks" id="dc-journal" style="margin-bottom:14px;"></div>
+
+                <div class="goal-row">
+                    <div class="goal-icon" style="background:var(--blue-dim); color:var(--blue); font-size:12px; font-weight:500;">C</div>
+                    <div class="goal-info">
+                        <div class="goal-name">Forex class sessions</div>
+                        <div class="goal-meta">Tap each session attended</div>
+                    </div>
+                </div>
+                <div class="day-checks" id="dc-class" style="margin-bottom:14px;"></div>
+
+                <div class="goal-row">
+                    <div class="goal-icon" style="background:var(--gold-dim); color:var(--gold); font-size:12px; font-weight:500;">h</div>
+                    <div class="goal-info">
+                        <div class="goal-name">Chart study hours</div>
+                        <div class="goal-meta">Target: <span id="g-study-tgt">5</span>h &nbsp;|&nbsp; Logged: <input class="input-num" id="g-study-val" type="number" min="0" max="40" step="0.5" value="0" oninput="saveGoals()">h</div>
+                    </div>
+                    <input class="input-num" id="g-study-tgt-input" type="number" min="1" max="40" value="5" oninput="document.getElementById('g-study-tgt').textContent=this.value; saveGoals()" style="width:50px;">
+                </div>
+                <div class="prog-bar" style="margin-bottom:14px;"><div class="prog-fill gold" id="pb-study" style="width:0%"></div></div>
+
+                <div class="goal-row" style="margin-bottom:8px;">
+                    <div class="goal-icon" style="background:var(--blue-dim); color:var(--blue); font-size:12px; font-weight:500;">B</div>
+                    <div class="goal-info">
+                        <div class="goal-name">Backtesting sessions</div>
+                        <div class="goal-meta">Target: <span id="g-bt-tgt">2</span> &nbsp;|&nbsp; Done: <input class="input-num" id="g-bt-val" type="number" min="0" max="14" value="0" oninput="saveGoals()"></div>
+                    </div>
+                    <input class="input-num" id="g-bt-tgt-input" type="number" min="1" max="14" value="2" oninput="document.getElementById('g-bt-tgt').textContent=this.value; saveGoals()" style="width:50px;">
+                </div>
+                <div class="prog-bar" style="margin-bottom:0;"><div class="prog-fill blue" id="pb-bt" style="width:0%"></div></div>
+            </div>
+        </div>
+
+        <!-- DISCIPLINE -->
+        <div class="card">
+            <div class="goal-section">
+                <div class="goal-section-title">Discipline checks</div>
+                <div id="discipline-checks"></div>
+            </div>
+        </div>
+
+        <div style="height:20px;"></div>
+    </div>
+
+    <!-- RULES -->
+    <div class="page" id="page-rules">
+        <div class="page-header">
+            <div>
+                <div class="page-header-title">My Rules & Plan</div>
+                <div class="page-header-sub">Stay disciplined. Trust the process.</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Golden rules</div>
+            <div class="rule-row"><div style="display:flex;align-items:center;gap:10px;"><div class="rule-dot"></div><span>Max 2–3 trades per session</span></div><span class="badge badge-green">Active</span></div>
+            <div class="rule-row"><div style="display:flex;align-items:center;gap:10px;"><div class="rule-dot"></div><span>Risk max 1–2% per trade</span></div><span class="badge badge-green">Active</span></div>
+            <div class="rule-row"><div style="display:flex;align-items:center;gap:10px;"><div class="rule-dot"></div><span>Minimum R:R of 1:2</span></div><span class="badge badge-green">Active</span></div>
+            <div class="rule-row"><div style="display:flex;align-items:center;gap:10px;"><div class="rule-dot"></div><span>No trading during high-impact news</span></div><span class="badge badge-green">Active</span></div>
+            <div class="rule-row"><div style="display:flex;align-items:center;gap:10px;"><div class="rule-dot"></div><span>Stop if daily loss hits –3%</span></div><span class="badge badge-green">Active</span></div>
+            <div class="rule-row"><div style="display:flex;align-items:center;gap:10px;"><div class="rule-dot"></div><span>Only trade London / NY session</span></div><span class="badge badge-green">Active</span></div>
+            <div class="rule-row"><div style="display:flex;align-items:center;gap:10px;"><div class="rule-dot"></div><span>No revenge trading after a loss</span></div><span class="badge badge-green">Active</span></div>
+            <div class="rule-row"><div style="display:flex;align-items:center;gap:10px;"><div class="rule-dot"></div><span>Always use a stop loss — no exceptions</span></div><span class="badge badge-green">Active</span></div>
+            <div class="rule-row" style="border-bottom:none;"><div style="display:flex;align-items:center;gap:10px;"><div class="rule-dot"></div><span>Journal every trading day</span></div><span class="badge badge-green">Active</span></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Account targets</div>
+            <div class="row2">
+                <div class="field"><label>Account balance ($)</label><input type="number" id="r-balance" placeholder="5000" oninput="saveRules()"></div>
+                <div class="field"><label>Monthly target (%)</label><input type="number" id="r-monthly" placeholder="5" oninput="saveRules()"></div>
+            </div>
+            <div class="row2">
+                <div class="field"><label>Max daily loss ($)</label><input type="number" id="r-maxloss" placeholder="150" oninput="saveRules()"></div>
+                <div class="field"><label>Max drawdown (%)</label><input type="number" id="r-maxdd" placeholder="10" oninput="saveRules()"></div>
+            </div>
+            <div class="field" style="margin-bottom:0;">
+                <label>My trading edge / strategy</label>
+                <textarea id="r-edge" placeholder="Describe your edge: setups you look for, confirmation needed, what makes a valid trade..." oninput="saveRules()"></textarea>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Pairs I trade</div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;" id="pairs-display"></div>
+            <div class="field" style="margin-bottom:0;">
+                <label>Edit pairs (comma separated)</label>
+                <input type="text" id="r-pairs" placeholder="EUR/USD, GBP/USD, XAU/USD" oninput="updatePairs()">
+            </div>
+        </div>
+        <div style="height:20px;"></div>
+    </div>
+
+    <!-- SCHEDULE -->
+    <div class="page" id="page-schedule">
+        <div class="page-header">
+            <div>
+                <div class="page-header-title">Schedule</div>
+                <div class="page-header-sub">Sessions & study plan</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Forex sessions (EST)</div>
+            <div class="session-grid" id="session-grid"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Weekly study plan</div>
+            <div class="rule-row"><div style="font-size:13px;"><strong style="color:var(--text);">Mon – Fri</strong><br><span style="color:var(--muted);">Pre-market analysis & chart review</span></div><span class="badge badge-green">Daily</span></div>
+            <div class="rule-row"><div style="font-size:13px;"><strong style="color:var(--text);">Mon / Wed</strong><br><span style="color:var(--muted);">Forex class / course modules</span></div><span class="badge badge-blue">Class</span></div>
+            <div class="rule-row"><div style="font-size:13px;"><strong style="color:var(--text);">Tue / Thu</strong><br><span style="color:var(--muted);">Backtesting & strategy review</span></div><span class="badge badge-gold">Practice</span></div>
+            <div class="rule-row"><div style="font-size:13px;"><strong style="color:var(--text);">Weekend</strong><br><span style="color:var(--muted);">Weekly review & planning next week</span></div><span class="badge badge-muted">Review</span></div>
+            <div class="rule-row" style="border-bottom:none;"><div style="font-size:13px;"><strong style="color:var(--text);">Every day</strong><br><span style="color:var(--muted);">Fill in this trading journal</span></div><span class="badge badge-green">Habit</span></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">My custom schedule notes</div>
+            <div class="field" style="margin-bottom:0;">
+                <textarea id="sched-notes" placeholder="Add your class times, personal schedule, reminders..." oninput="saveScheduleNotes()" style="min-height:100px;"></textarea>
+            </div>
+        </div>
+        <div style="height:20px;"></div>
+    </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const CHECKLIST_ITEMS = [
+      'Reviewed economic calendar (high-impact news)',
+      'Checked session opens (London / NY)',
+      'Identified key support & resistance levels',
+      'Confirmed daily bias (bullish / bearish / neutral)',
+      'Risk per trade set (max 1–2%)',
+      'No news events in next 30 minutes',
+      'Platform & charts ready'
+    ];
+    const EMOTIONS = ['Focused','Confident','Calm','Patient','Anxious','Impatient','Fearful','Greedy'];
+    const DISCIPLINE_ITEMS = [
+      'No revenge trading this week',
+      'Stopped when daily loss limit hit',
+      'Did not overtrade',
+      'Followed entry rules on every trade',
+      'Kept emotions in check',
+      'No FOMO trades taken'
+    ];
+    const SESSIONS = [
+      { name:'Sydney', time:'5:00 PM – 2:00 AM', pairs:'AUD/USD, NZD/USD', start:17, end:2 },
+      { name:'Tokyo', time:'7:00 PM – 4:00 AM', pairs:'USD/JPY, AUD/JPY', start:19, end:4 },
+      { name:'London', time:'3:00 AM – 12:00 PM', pairs:'EUR/USD, GBP/USD, EUR/GBP', start:3, end:12 },
+      { name:'New York', time:'8:00 AM – 5:00 PM', pairs:'All majors, XAU/USD', start:8, end:17 },
+    ];
+
+    let trades = JSON.parse(localStorage.getItem('fj_trades')||'[]');
+    let dailyLogs = JSON.parse(localStorage.getItem('fj_daily')||'{}');
+    let goals = JSON.parse(localStorage.getItem('fj_goals')||'{}');
+    let rules = JSON.parse(localStorage.getItem('fj_rules')||'{}');
+    let schedNotes = localStorage.getItem('fj_sched')||'';
+
+    function go(id) {
+      document.querySelectorAll('.nav-btn').forEach((b,i)=>{
+        const ids=['dashboard','daily','trade','history','weekly','rules','schedule'];
+        b.classList.toggle('active', ids[i]===id);
+      });
+      document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+      document.getElementById('page-'+id).classList.add('active');
+      if(id==='dashboard') renderDashboard();
+      if(id==='daily') renderDaily();
+      if(id==='history') renderHistory();
+      if(id==='weekly') renderWeekly();
+      if(id==='rules') renderRules();
+      if(id==='schedule') renderSchedule();
+      if(id==='trade') document.getElementById('trade-date').textContent = fmtDate(new Date());
+    }
+
+    function todayKey() {
+      const d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+    }
+    function weekKey() {
+      const d=new Date(), day=d.getDay(), diff=d.getDate()-day+(day===0?-6:1);
+      const mon=new Date(d.setDate(diff));
+      return mon.getFullYear()+'-'+(mon.getMonth()+1)+'-'+mon.getDate();
+    }
+    function fmtDate(d) {
+      return d.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    }
+    function toast(msg) {
+      const t=document.getElementById('toast');
+      t.textContent=msg; t.classList.add('show');
+      setTimeout(()=>t.classList.remove('show'),2000);
+    }
+
+    function calcRR() {
+      const e=parseFloat(document.getElementById('t-entry').value);
+      const s=parseFloat(document.getElementById('t-sl').value);
+      const tp=parseFloat(document.getElementById('t-tp').value);
+      if(e&&s&&tp){
+        const risk=Math.abs(e-s), reward=Math.abs(tp-e);
+        if(risk>0) document.getElementById('t-rr').value='1:'+(reward/risk).toFixed(1);
+      }
+    }
+
+    function saveTrade() {
+      const pair=document.getElementById('t-pair').value;
+      const entry=document.getElementById('t-entry').value;
+      if(!entry){toast('Enter an entry price'); return;}
+      const trade={
+        id: Date.now(),
+        date: todayKey(),
+        pair, dir:document.getElementById('t-dir').value,
+        type:document.getElementById('t-type').value,
+        entry, sl:document.getElementById('t-sl').value,
+        tp:document.getElementById('t-tp').value,
+        lot:document.getElementById('t-lot').value,
+        risk:document.getElementById('t-risk').value,
+        rr:document.getElementById('t-rr').value,
+        tf:document.getElementById('t-tf').value,
+        strat:document.getElementById('t-strat').value,
+        trend:document.getElementById('t-trend').value,
+        session:document.getElementById('t-session').value,
+        conf:document.getElementById('t-conf').value,
+        reason:document.getElementById('t-reason').value,
+        exit:document.getElementById('t-exit').value,
+        outcome:document.getElementById('t-outcome').value,
+        pnl:parseFloat(document.getElementById('t-pnl').value)||0,
+        postnotes:document.getElementById('t-postnotes').value
+      };
+      trades.unshift(trade);
+      localStorage.setItem('fj_trades', JSON.stringify(trades));
+      ['t-entry','t-sl','t-tp','t-lot','t-risk','t-rr','t-conf','t-reason','t-exit','t-pnl','t-postnotes'].forEach(id=>{
+        const el=document.getElementById(id); if(el) el.value='';
+      });
+      toast('Trade saved!');
+    }
+
+    function clearTrades() { trades=[]; localStorage.setItem('fj_trades',JSON.stringify(trades)); renderHistory(); }
+
+    function saveDaily() {
+      const key=todayKey();
+      const checkboxes=document.querySelectorAll('#checklist-wrap .check-box');
+      const checks=Array.from(checkboxes).map(b=>b.classList.contains('checked'));
+      const emoSel=document.querySelector('.emo-btn.sel');
+      dailyLogs[key]={
+        checks, emotion:emoSel?emoSel.textContent:'',
+        sentiment:document.getElementById('dl-sentiment').value,
+        news:document.getElementById('dl-news').value,
+        notes:document.getElementById('dl-notes').value,
+        plan:document.getElementById('dl-plan').value,
+        rating:document.getElementById('dl-rating').value,
+        good:document.getElementById('dl-good').value,
+        improve:document.getElementById('dl-improve').value,
+        ts: Date.now()
+      };
+      localStorage.setItem('fj_daily', JSON.stringify(dailyLogs));
+      toast('Daily log saved!');
+    }
+
+    function saveGoals() {
+      const wk=weekKey();
+      if(!goals[wk]) goals[wk]={};
+      const g=goals[wk];
+      g.trades_val=document.getElementById('g-trades-val').value;
+      g.trades_tgt=document.getElementById('g-trades-tgt-input').value;
+      g.wr_tgt=document.getElementById('g-wr-tgt-input').value;
+      g.rr_val=document.getElementById('g-rr-val').value;
+      g.pnl_tgt=document.getElementById('g-pnl-tgt-input').value;
+      g.study_val=document.getElementById('g-study-val').value;
+      g.study_tgt=document.getElementById('g-study-tgt-input').value;
+      g.bt_val=document.getElementById('g-bt-val').value;
+      g.bt_tgt=document.getElementById('g-bt-tgt-input').value;
+      g.journal_days=Array.from(document.querySelectorAll('#dc-journal .day-check')).map(d=>d.classList.contains('filled'));
+      g.class_days=Array.from(document.querySelectorAll('#dc-class .day-check')).map(d=>d.classList.contains('filled'));
+      g.discipline=Array.from(document.querySelectorAll('#discipline-checks .check-box')).map(b=>b.classList.contains('checked'));
+      localStorage.setItem('fj_goals', JSON.stringify(goals));
+      updateWeeklyScore();
+    }
+
+    function saveRules() {
+      rules={
+        balance:document.getElementById('r-balance').value,
+        monthly:document.getElementById('r-monthly').value,
+        maxloss:document.getElementById('r-maxloss').value,
+        maxdd:document.getElementById('r-maxdd').value,
+        edge:document.getElementById('r-edge').value,
+        pairs:document.getElementById('r-pairs').value
+      };
+      localStorage.setItem('fj_rules', JSON.stringify(rules));
+      updatePairs();
+    }
+
+    function saveScheduleNotes() {
+      schedNotes=document.getElementById('sched-notes').value;
+      localStorage.setItem('fj_sched', schedNotes);
+    }
+
+    function updatePairs() {
+      const val=document.getElementById('r-pairs').value||'EUR/USD, GBP/USD, XAU/USD';
+      const pairs=val.split(',').map(p=>p.trim()).filter(Boolean);
+      document.getElementById('pairs-display').innerHTML=pairs.map(p=>`<span class="badge badge-blue">${p}</span>`).join('');
+    }
+
+    function pct(val,tgt){ return Math.min(100, Math.round((val/tgt)*100)); }
+
+    function updateWeeklyScore() {
+      const wk=weekKey(); const g=goals[wk]||{};
+      const wkTrades=trades.filter(t=>{ const d=new Date(t.date.replace(/-/g,'/')); return weekOfDate(d)===wk; });
+      const wkWins=wkTrades.filter(t=>t.outcome==='Win').length;
+      const wkClosed=wkTrades.filter(t=>t.outcome!=='Pending').length;
+      const wkPnl=wkTrades.reduce((s,t)=>s+(t.pnl||0),0);
+      const wr=wkClosed?Math.round((wkWins/wkClosed)*100):0;
+
+      const trTgt=parseInt(g.trades_tgt||5); const trVal=parseInt(g.trades_val||0);
+      const wrTgt=parseInt(g.wr_tgt||60);
+      const rrVal=parseInt(g.rr_val||0);
+      const pnlTgt=parseFloat(g.pnl_tgt||200);
+      const stTgt=parseFloat(g.study_tgt||5); const stVal=parseFloat(g.study_val||0);
+      const btTgt=parseInt(g.bt_tgt||2); const btVal=parseInt(g.bt_val||0);
+      const jDays=(g.journal_days||[]).filter(Boolean).length;
+      const cDays=(g.class_days||[]).filter(Boolean).length;
+
+      setBar('pb-trades', pct(trVal,trTgt));
+      setBar('pb-wr', pct(wr,wrTgt));
+      setBar('pb-rr', pct(rrVal,5));
+      setBar('pb-pnl', pct(Math.max(0,wkPnl),pnlTgt));
+      setBar('pb-study', pct(stVal,stTgt));
+      setBar('pb-bt', pct(btVal,btTgt));
+
+      document.getElementById('g-wr-actual').textContent = wkClosed ? wr+'%' : '—';
+      document.getElementById('g-pnl-actual').textContent = '$'+wkPnl.toFixed(0);
+
+      const scores=[pct(trVal,trTgt),pct(wr,wrTgt),pct(rrVal,5),pct(Math.max(0,wkPnl),pnlTgt),pct(stVal,stTgt),pct(btVal,btTgt),pct(jDays,5),pct(cDays,2)];
+      const overall=Math.round(scores.reduce((a,b)=>a+b,0)/scores.length);
+      setBar('wp-bar', overall);
+      document.getElementById('week-score').textContent=overall+'%';
+      const done=scores.filter(s=>s>=100).length;
+      document.getElementById('wp-complete').textContent=done+' done';
+      document.getElementById('wp-remain').textContent=(scores.length-done)+' remaining';
+    }
+
+    function setBar(id, pct) {
+      const el=document.getElementById(id); if(el) el.style.width=pct+'%';
+    }
+
+    function weekOfDate(d) {
+      const day=d.getDay(), diff=d.getDate()-day+(day===0?-6:1);
+      const mon=new Date(new Date(d).setDate(diff));
+      return mon.getFullYear()+'-'+(mon.getMonth()+1)+'-'+mon.getDate();
+    }
+
+    function renderDashboard() {
+      const now=new Date();
+      document.getElementById('dash-date').textContent=fmtDate(now);
+      const h=now.getHours();
+      let sess='Between sessions', cls='badge-muted';
+      if(h>=3&&h<12){sess='London open'; cls='badge-green';}
+      else if(h>=8&&h<17){sess='New York open'; cls='badge-blue';}
+      else if(h>=19||h<4){sess='Tokyo open'; cls='badge-gold';}
+      const sb=document.getElementById('session-badge');
+      sb.textContent=sess; sb.className='badge '+cls;
+
+      const totalPnl=trades.reduce((s,t)=>s+(t.pnl||0),0);
+      const wins=trades.filter(t=>t.outcome==='Win').length;
+      const closed=trades.filter(t=>t.outcome!=='Pending').length;
+      const wk=weekKey();
+      const wkTrades=trades.filter(t=>weekOfDate(new Date(t.date.replace(/-/g,'/')))===wk);
+      const wkPnl=wkTrades.reduce((s,t)=>s+(t.pnl||0),0);
+
+      const pnlEl=document.getElementById('d-totalpnl');
+      pnlEl.textContent=(totalPnl>=0?'+':'')+'$'+Math.abs(totalPnl).toFixed(0);
+      pnlEl.className='metric-value '+(totalPnl>=0?'pos':'neg');
+      document.getElementById('d-wr').textContent=closed?Math.round(wins/closed*100)+'%':'—';
+      document.getElementById('d-total').textContent=trades.length;
+      const wkEl=document.getElementById('d-week');
+      wkEl.textContent=(wkPnl>=0?'+':'')+'$'+Math.abs(wkPnl).toFixed(0);
+      wkEl.className='metric-value '+(wkPnl>=0?'pos':'neg');
+
+      const g=goals[wk]||{};
+      const jDays=(g.journal_days||[]).filter(Boolean).length;
+      const cDays=(g.class_days||[]).filter(Boolean).length;
+      const stVal=parseFloat(g.study_val||0); const stTgt=parseFloat(g.study_tgt||5);
+      const wkWins=wkTrades.filter(t=>t.outcome==='Win').length;
+      document.getElementById('g-journal-d').textContent=jDays+'/5';
+      document.getElementById('g-class-d').textContent=cDays+'/2';
+      document.getElementById('g-study-d').textContent=stVal+'/'+stTgt+'h';
+      document.getElementById('g-wins-d').textContent=wkWins+'/3';
+      setBar('g-journal-b', pct(jDays,5));
+      setBar('g-class-b', pct(cDays,2));
+      setBar('g-study-b', pct(stVal,stTgt));
+      setBar('g-wins-b', pct(wkWins,3));
+
+      const recent=trades.slice(0,5);
+      const rw=document.getElementById('dash-recent');
+      if(!recent.length){rw.innerHTML='<div class="empty" style="padding:20px 0;">No trades yet</div>'; return;}
+      rw.innerHTML=recent.map(t=>`
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);">
+          <div>
+            <span class="badge ${t.dir==='Buy'?'badge-green':'badge-red'}" style="margin-right:6px;">${t.dir}</span>
+            <span style="font-size:13px;font-family:var(--font-mono);">${t.pair}</span>
+          </div>
+          <div style="font-family:var(--font-mono);font-size:13px;color:${t.pnl>=0?'var(--green)':'var(--red)'};">${t.pnl>=0?'+':''}$${(t.pnl||0).toFixed(0)}</div>
+        </div>
+      `).join('')+'<div style="border-bottom:none;height:1px;"></div>';
+
+      const last14=[];
+      for(let i=13;i>=0;i--){
+        const d=new Date(); d.setDate(d.getDate()-i);
+        const k=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+        last14.push(!!dailyLogs[k]);
+      }
+      const dots=document.getElementById('streak-dots');
+      dots.innerHTML=last14.map(on=>`<div class="streak-dot ${on?'on':''}"></div>`).join('');
+      let streak=0;
+      for(let i=last14.length-1;i>=0;i--){if(last14[i])streak++;else break;}
+      document.getElementById('streak-label').textContent=streak?`${streak}-day streak — keep it going!`:'Start logging daily to build your streak';
+    }
+
+    function renderDaily() {
+      document.getElementById('daily-date').textContent=fmtDate(new Date());
+      const key=todayKey(); const log=dailyLogs[key]||{};
+      const cw=document.getElementById('checklist-wrap');
+      cw.innerHTML=CHECKLIST_ITEMS.map((item,i)=>`
+        <div class="check-item" onclick="toggleCheck(this)">
+          <div class="check-box ${log.checks&&log.checks[i]?'checked':''}"></div>
+          <span class="check-label ${log.checks&&log.checks[i]?'done':''}">${item}</span>
+        </div>
+      `).join('');
+      const eg=document.getElementById('emo-grid');
+      eg.innerHTML=EMOTIONS.map(e=>`<button class="emo-btn ${log.emotion===e?'sel':''}" onclick="selectEmo(this)">${e}</button>`).join('');
+      if(log.sentiment) document.getElementById('dl-sentiment').value=log.sentiment;
+      if(log.news) document.getElementById('dl-news').value=log.news;
+      if(log.notes) document.getElementById('dl-notes').value=log.notes;
+      if(log.plan) document.getElementById('dl-plan').value=log.plan;
+      if(log.rating) document.getElementById('dl-rating').value=log.rating;
+      if(log.good) document.getElementById('dl-good').value=log.good;
+      if(log.improve) document.getElementById('dl-improve').value=log.improve;
+      if(log.rating){
+        const rb=document.getElementById('daily-rating-badge');
+        rb.textContent=log.rating+'/5';
+        rb.className='badge '+(log.rating>=4?'badge-green':log.rating>=3?'badge-gold':'badge-red');
+      }
+    }
+
+    function toggleCheck(item) {
+      const box=item.querySelector('.check-box');
+      const label=item.querySelector('.check-label');
+      box.classList.toggle('checked');
+      label.classList.toggle('done');
+    }
+
+    function selectEmo(btn) {
+      document.querySelectorAll('.emo-btn').forEach(b=>b.classList.remove('sel'));
+      btn.classList.add('sel');
+    }
+
+    function renderHistory() {
+      const hw=document.getElementById('history-wrap');
+      if(!trades.length){hw.innerHTML='<div class="empty"><div class="empty-icon">—</div>No trades yet.<br>Log your first trade!</div>'; return;}
+      const totalPnl=trades.reduce((s,t)=>s+(t.pnl||0),0);
+      const wins=trades.filter(t=>t.outcome==='Win').length;
+      const closed=trades.filter(t=>t.outcome!=='Pending');
+      const pnls=closed.map(t=>t.pnl||0);
+      const best=pnls.length?Math.max(...pnls):null;
+      const worst=pnls.length?Math.min(...pnls):null;
+      const pnlEl=document.getElementById('h-pnl');
+      pnlEl.textContent=(totalPnl>=0?'+':'')+'$'+Math.abs(totalPnl).toFixed(0);
+      pnlEl.className='metric-value '+(totalPnl>=0?'pos':'neg');
+      document.getElementById('h-wr').textContent=closed.length?Math.round(wins/closed.length*100)+'%':'—';
+      document.getElementById('h-best').textContent=best!==null?'+$'+best.toFixed(0):'—';
+      document.getElementById('h-worst').textContent=worst!==null?'$'+worst.toFixed(0):'—';
+      hw.innerHTML=`<table class="trade-table">
+        <thead><tr><th>Date</th><th>Pair</th><th>Dir</th><th>R:R</th><th>P&L</th><th>Result</th></tr></thead>
+        <tbody>${trades.map(t=>`
+          <tr>
+            <td>${t.date}</td>
+            <td>${t.pair}</td>
+            <td><span class="badge ${t.dir==='Buy'?'badge-green':'badge-red'}">${t.dir}</span></td>
+            <td>${t.rr||'—'}</td>
+            <td style="color:${(t.pnl||0)>=0?'var(--green)':'var(--red)'};">${(t.pnl||0)>=0?'+':''}$${(t.pnl||0).toFixed(0)}</td>
+            <td><span class="badge ${t.outcome==='Win'?'badge-green':t.outcome==='Loss'?'badge-red':'badge-muted'}">${t.outcome}</span></td>
+          </tr>
+        `).join('')}</tbody>
+      </table>`;
+    }
+
+    function renderWeekly() {
+      const wk=weekKey(); const g=goals[wk]||{};
+      const now=new Date();
+      const mon=new Date(now); const day=mon.getDay(); mon.setDate(mon.getDate()-day+(day===0?-6:1));
+      const sun=new Date(mon); sun.setDate(mon.getDate()+6);
+      document.getElementById('week-label').textContent=mon.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' – '+sun.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+
+      if(g.trades_val) document.getElementById('g-trades-val').value=g.trades_val;
+      if(g.trades_tgt){document.getElementById('g-trades-tgt-input').value=g.trades_tgt; document.getElementById('g-trades-tgt').textContent=g.trades_tgt;}
+      if(g.wr_tgt){document.getElementById('g-wr-tgt-input').value=g.wr_tgt; document.getElementById('g-wr-tgt').textContent=g.wr_tgt;}
+      if(g.rr_val) document.getElementById('g-rr-val').value=g.rr_val;
+      if(g.pnl_tgt){document.getElementById('g-pnl-tgt-input').value=g.pnl_tgt; document.getElementById('g-pnl-tgt').textContent=g.pnl_tgt;}
+      if(g.study_val) document.getElementById('g-study-val').value=g.study_val;
+      if(g.study_tgt){document.getElementById('g-study-tgt-input').value=g.study_tgt; document.getElementById('g-study-tgt').textContent=g.study_tgt;}
+      if(g.bt_val) document.getElementById('g-bt-val').value=g.bt_val;
+      if(g.bt_tgt){document.getElementById('g-bt-tgt-input').value=g.bt_tgt; document.getElementById('g-bt-tgt').textContent=g.bt_tgt;}
+
+      ['dc-journal','dc-class'].forEach((id,idx)=>{
+        const saved=idx===0?(g.journal_days||[]):(g.class_days||[]);
+        const colorClass=idx===0?'':'blue';
+        document.getElementById(id).innerHTML=DAYS.map((d,i)=>`
+          <div class="day-check ${saved[i]?'filled '+colorClass:''}" onclick="toggleDay(this,'${id}')" title="${d}">${d.slice(0,1)}</div>
+        `).join('');
+      });
+
+      const dc=document.getElementById('discipline-checks');
+      dc.innerHTML=DISCIPLINE_ITEMS.map((item,i)=>`
+        <div class="check-item" onclick="toggleCheckGoal(this)">
+          <div class="check-box ${g.discipline&&g.discipline[i]?'checked':''}"></div>
+          <span class="check-label ${g.discipline&&g.discipline[i]?'done':''}">${item}</span>
+        </div>
+      `).join('');
+
+      updateWeeklyScore();
+    }
+
+    function toggleDay(el, containerId) {
+      const isBlue=containerId==='dc-class';
+      el.classList.toggle('filled');
+      if(isBlue) el.classList.toggle('blue', el.classList.contains('filled'));
+      saveGoals();
+    }
+
+    function toggleCheckGoal(item) {
+      const box=item.querySelector('.check-box');
+      const label=item.querySelector('.check-label');
+      box.classList.toggle('checked');
+      label.classList.toggle('done');
+      saveGoals();
+    }
+
+    function renderRules() {
+      if(rules.balance) document.getElementById('r-balance').value=rules.balance;
+      if(rules.monthly) document.getElementById('r-monthly').value=rules.monthly;
+      if(rules.maxloss) document.getElementById('r-maxloss').value=rules.maxloss;
+      if(rules.maxdd) document.getElementById('r-maxdd').value=rules.maxdd;
+      if(rules.edge) document.getElementById('r-edge').value=rules.edge;
+      const pairsInput=document.getElementById('r-pairs');
+      pairsInput.value=rules.pairs||'EUR/USD, GBP/USD, XAU/USD';
+      updatePairs();
+    }
+
+    function renderSchedule() {
+      const h=new Date().getHours();
+      document.getElementById('session-grid').innerHTML=SESSIONS.map(s=>{
+        const isActive=(s.start<s.end)?(h>=s.start&&h<s.end):(h>=s.start||h<s.end);
+        return `<div class="session-card ${isActive?'active-now':''}">
+          <div class="session-name">${s.name} ${isActive?'<span class="badge badge-green" style="font-size:10px;padding:1px 6px;">Live</span>':''}</div>
+          <div class="session-time">${s.time} EST</div>
+          <div class="session-pairs">${s.pairs}</div>
+        </div>`;
+      }).join('');
+      document.getElementById('sched-notes').value=schedNotes;
+    }
+
+    renderDashboard();
+</script>
+</body>
+</html>
